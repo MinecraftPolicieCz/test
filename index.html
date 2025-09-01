@@ -1,378 +1,584 @@
 <!DOCTYPE html>
 <html lang="cs">
+
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OPRAVÁŘ PC 1.0</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Opravář PC 1.0</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+New:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        /* --- Základní stylování --- */
-        :root{
-            --bg:#1a1a1a;
-            --accent:#00b4d8;
-            --panel:#2b2b2b;
-            --text:#eaeaea;
-            --glass: rgba(255,255,255,0.04);
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+            text-align: center;
         }
-        html,body{
-            height:100%;
-            margin:0;
-            background: linear-gradient(180deg,#0b0b0b 0%, #111 100%);
-            font-family: 'Segoe UI', Roboto, sans-serif;
-            color:var(--text);
+
+        .container {
+            width: 800px;
+            max-width: 90%;
+            height: 500px;
+            max-height: 90vh;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: rgba(0, 0, 0, 0.8);
+            position: relative;
         }
-        .container{
-            max-width:1100px;
-            margin:20px auto;
-            padding:20px;
+
+        .title {
+            color: #00ff00;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+            animation: flicker 1.5s infinite alternate;
         }
-        header{
-            display:flex;
-            gap:12px;
-            align-items:center;
+
+        .subtitle {
+            font-size: 1.2em;
+            text-align: center;
+            margin-bottom: 20px;
         }
-        h1{font-size:20px;margin:0}
-        nav{margin-left:auto}
-        button{background:var(--accent);border:0;padding:8px 12px;border-radius:8px;color:#000;cursor:pointer}
-        /* --- Menu a okna --- */
-        .menu{display:flex;gap:8px;margin-top:16px}
-        .window{
-            background:var(--panel);
-            border-radius:12px;
-            padding:12px;
-            box-shadow:0 6px 30px rgba(0,0,0,0.6);
+
+        .menu-item {
+            cursor: pointer;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #00ff00;
+            background-color: #003300;
+            transition: background-color 0.3s;
         }
-        #workspace{
-            margin-top:18px;
-            display:grid;
-            grid-template-columns: 1fr 320px;
-            gap:12px;
+
+        .menu-item:hover {
+            background-color: #006600;
         }
-        .card{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
-        /* Inventář */
-        #inventory{min-height:120px}
-        #inventory-list{list-style:none;padding:0;margin:8px 0}
-        #inventory-list li{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
-        .small{font-size:13px;color:rgba(255,255,255,0.7)}
-        /* shop */
-        #shop-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-        .shop-item{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)}
-        /* konzole */
-        #console{height:220px;overflow:auto;background:#090909;padding:8px;border-radius:8px;font-family:monospace;font-size:13px}
-        /* responzivita */
-        @media (max-width:900px){
-            #workspace{grid-template-columns:1fr}
-            nav{display:none}
+
+        #splash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .progress-bar {
+            width: 80%;
+            height: 20px;
+            border: 1px solid #00ff00;
+            margin-top: 20px;
+        }
+
+        .progress {
+            height: 100%;
+            width: 0%;
+            background-color: #00ff00;
+            transition: width 0.5s;
+        }
+
+        .status-message {
+            margin-top: 10px;
+            color: #00ff00;
+            font-size: 1em;
+        }
+
+        .scan-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(to right, rgba(0, 255, 0, 0), rgba(0, 255, 0, 0.5), rgba(0, 255, 0, 0));
+            animation: scan 5s linear infinite;
+            z-index: 9;
+        }
+
+        @keyframes scan {
+            0% {
+                transform: translateY(0);
+            }
+
+            100% {
+                transform: translateY(100vh);
+            }
+        }
+
+        .crt-effect::before,
+        .crt-effect::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 8;
+        }
+
+        .crt-effect::before {
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.5) 100%);
+            mix-blend-mode: overlay;
+        }
+
+        .crt-effect::after {
+            background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1) 1px, transparent 1px, transparent 2px);
+            opacity: 0.8;
+        }
+
+        .blue-screen {
+            background-color: #00008b;
+            color: #fff;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 100;
+            line-height: 1.5;
+        }
+
+        .blue-screen .title {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            animation: none;
+            color: #fff;
+        }
+
+        #game-screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .game-header span {
+            font-size: 1.2em;
+        }
+
+        #game-content {
+            height: calc(100% - 40px);
+            overflow-y: auto;
+            border: 1px solid #00ff00;
+            padding: 10px;
+            box-sizing: border-box;
+            background-color: #001100;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        #terminal {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        #terminal input {
+            flex-grow: 1;
+            background-color: #001100;
+            border: none;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .terminal-output {
+            margin-bottom: 10px;
+        }
+
+        .blinking-cursor {
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            background-color: #000;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            box-sizing: border-box;
+            z-index: 20;
+            text-align: left;
+        }
+
+        .modal-content {
+            margin-top: 10px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5em;
+        }
+
+        .modal-item {
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid transparent;
+            margin: 5px 0;
+            transition: background-color 0.3s;
+        }
+
+        .modal-item:hover {
+            background-color: #003300;
+        }
+
+        #progress-modal {
+            display: none;
+            background-color: #00008b;
+            color: #fff;
+            text-align: center;
+        }
+
+        .progress-bar-modal {
+            width: 80%;
+            height: 20px;
+            border: 1px solid #fff;
+            margin: 10px auto;
+        }
+
+        .progress-modal-inner {
+            height: 100%;
+            background-color: #fff;
+            width: 0;
+            transition: width 0.5s;
+        }
+
+        .difficulty-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        #intro-video {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        #intro-video-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: black;
+            z-index: 100;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0.8;
+            }
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <header>
-            <img src="logo.png" alt="logo" style="height:48px">
-            <h1>OPRAVÁŘ PC 1.0</h1>
-            <nav>
-                <button id="btn-workspace">Pracoviště</button>
-                <button id="btn-shop">Obchod</button>
-                <button id="btn-inventory">Inventář</button>
-                <button id="btn-tasks">Úkoly</button>
-            </nav>
-        </header>
-
-        <div id="main-menu" class="menu">
-            <div class="window card" style="flex:1">
-                <h2>Herní nastavení</h2>
-                <p class="small">Vyber obtížnost, zapni/ vypni hudbu nebo si prohlédni návod.</p>
-                <div style="margin-top:8px">
-                    <label class="small">Hudba <input type="checkbox" id="toggle-music" checked></label>
-                    <label class="small" style="margin-left:12px">Zvuky <input type="checkbox" id="toggle-sfx" checked></label>
-                </div>
-                <div style="margin-top:12px">
-                    <button id="start-game">Spustit hru</button>
-                </div>
-            </div>
-
-            <div class="window card" style="width:320px">
-                <h3>Aktuální stav</h3>
-                <p class="small">Úkol: <span id="current-task">žádný</span></p>
-                <p class="small">Peněženka: <strong id="money-display">$100</strong></p>
-                <div style="margin-top:6px">
-                    <button id="save-game">Uložit hru</button>
-                    <button id="load-game">Načíst hru</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="workspace" style="display:none">
-            <div style="min-height:600px">
-                <div class="window card">
-                    <h2>Pracovní plocha</h2>
-                    <p class="small">Zde se provádí opravy — vlož komponenty, spusť diagnostiku a oprav chyby.</p>
-
-                    <div style="display:flex;gap:10px;margin-top:12px">
-                        <div style="flex:1">
-                            <h3>PC</h3>
-                            <div style="height:220px;border-radius:8px;background:linear-gradient(180deg, #050505, #111);display:flex;align-items:center;justify-content:center">
-                                <div style="text-align:center">
-                                    <img src="pc.png" alt="pc" style="height:120px;opacity:0.9"><br>
-                                    <span class="small">Klikni na PC pro spuštění diagnostiky</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style="width:320px">
-                            <div id="inventory" class="window card">
-                                <h2>Inventář</h2>
-                                <p>Zde se nachází vaše součástky, které můžete prodat za 50% prodejní ceny. Vaše peněženka: ${money}$</p>
-                                <ul id="inventory-list"></ul>
-                                <div style="margin-top:8px">
-                                    <button id="sell-selected">Prodat vybrané</button>
-                                    <button id="exitInventory">Zavřít</button>
-                                </div>
-                            </div>
-
-                            <div id="shop" class="window card" style="margin-top:12px;display:none">
-                                <h3>Obchod</h3>
-                                <div id="shop-list">
-                                    <!-- položky obchodu budou dynamicky vloženy -->
-                                </div>
-                                <div style="margin-top:8px">
-                                    <button id="exitShop">Zavřít obchod</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style="margin-top:12px">
-                        <h3>Konzole</h3>
-                        <div id="console"></div>
-                        <input id="console-input" placeholder="zadejte příkaz..." style="width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06)">
-                    </div>
-                </div>
-
-                <div class="window card" style="margin-top:12px">
-                    <h3>Diagnostika</h3>
-                    <p class="small">Automatické testy, logy a nástroje.</p>
-                    <div style="display:flex;gap:8px;margin-top:8px">
-                        <button id="run-diagnostics">Spustit test</button>
-                        <button id="repair">Opravit</button>
-                    </div>
-                </div>
-            </div>
-
-            <aside>
-                <div class="window card" style="width:320px">
-                    <h3>Rychlý přehled</h3>
-                    <p class="small">Stav: <span id="status">OK</span></p>
-                    <p class="small">Úroveň: <span id="level">1</span></p>
-                    <div style="margin-top:8px">
-                        <h4>Úkoly</h4>
-                        <ul id="tasks-list" style="padding-left:16px"></ul>
-                        <div style="margin-top:8px">
-                            <button id="exitTasks">Zavřít</button>
-                        </div>
-                    </div>
-                </div>
-            </aside>
-        </div>
-
-        <!-- skryté obrazovky: restart, shutdown -->
-        <div id="restart-screen" style="display:none" class="window card">
-            <h3>Restartování systému</h3>
-            <p class="small">Restartuji...</p>
-            <button id="restartButton">OK</button>
-        </div>
+    <div id="intro-video-container">
+        <video id="intro-video" muted>
+            <source src="intro.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
     </div>
 
+    <div id="blue-screen-modal" class="blue-screen" style="display:none;">
+        <h1 class="title">FATAL ERROR</h1>
+        <p>Windows has encountered a critical problem and needs to shut down.</p>
+        <p>Please restart your computer.</p>
+        <p>Error Code: 0x000000A5</p>
+    </div>
+
+    <div class="container crt-effect">
+        <div id="splash-screen">
+            <h1 class="title">Loading...</h1>
+            <div class="progress-bar">
+                <div class="progress" id="load-progress"></div>
+            </div>
+            <p class="status-message" id="load-status">System check...</p>
+        </div>
+
+        <div id="main-menu" style="display:none;">
+            <h1 class="title">OPRAVÁŘ PC 1.0</h1>
+            <p class="subtitle">Vítej v Opraváři PC! Tvým cílem je opravovat rozbité počítače a vydělávat peníze.</p>
+
+            <button class="menu-item" onclick="startGame()">Nová hra</button>
+            <button class="menu-item" onclick="showLoadGameMenu()">Pokračovat</button>
+            <button class="menu-item" onclick="showDifficultyMenu()">Obtížnost</button>
+        </div>
+
+        <div id="difficulty-menu" class="modal" style="display:none;">
+            <div class="modal-header">
+                <h2>Vybrat obtížnost</h2>
+                <span class="modal-close" onclick="hideDifficultyMenu()">&times;</span>
+            </div>
+            <div class="difficulty-options">
+                <button class="menu-item" onclick="setDifficulty('easy')">Snadná</button>
+                <button class="menu-item" onclick="setDifficulty('medium')">Střední</s></button>
+                <button class="menu-item" onclick="setDifficulty('hard')">Těžká</button>
+            </div>
+        </div>
+
+        <div id="game-screen">
+            <div class="game-header">
+                <span id="current-money"></span>
+                <span id="repaired-count"></span>
+            </div>
+            <div id="game-content"></div>
+            <div id="terminal">
+                <span id="input-prompt">> </span>
+                <input type="text" id="command-input" autofocus>
+            </div>
+        </div>
+        
+        <div id="tasks-modal" class="modal">
+            <div class="modal-header">
+                <h2>Seznam úkolů</h2>
+                <span class="modal-close" onclick="hideTasksModal()">&times;</span>
+            </div>
+            <div id="tasks-content" class="modal-content"></div>
+        </div>
+
+        <div id="inventory-modal" class="modal">
+            <div class="modal-header">
+                <h2>Inventář</h2>
+                <span class="modal-close" onclick="hideInventoryModal()">&times;</span>
+            </div>
+            <div id="inventory-content" class="modal-content"></div>
+        </div>
+
+        <div id="shop-modal" class="modal">
+            <div class="modal-header">
+                <h2>Obchod</h2>
+                <span class="modal-close" onclick="hideShopModal()">&times;</span>
+            </div>
+            <div id="shop-content" class="modal-content"></div>
+        </div>
+
+        <div id="progress-modal" class="blue-screen">
+            <h1 class="title">PROBÍHÁ OPRAVA</h1>
+            <div class="progress-bar-modal">
+                <div class="progress-modal-inner" id="repair-progress-bar"></div>
+            </div>
+            <p id="repair-status">...</p>
+        </div>
+    </div>
+    
+    <audio id="background-music" loop>
+        <source src="cyberpunk_music.mp3" type="audio/mpeg">
+    </audio>
+
     <script>
-        // --- Data a inicializace ---
-        let money = 100;
-        const items = [
-            { id:1, name:"Napájecí zdroj", price:120 },
-            { id:2, name:"RAM 8GB", price:80 },
-            { id:3, name:"SSD 256GB", price:150 },
-            { id:4, name:"Grafická karta (starší)", price:260 },
-            { id:5, name:"Chladič CPU", price:45 },
-        ];
-        let inventory = [
-            { id:2, name:"RAM 8GB", price:80, qty:1 },
-            { id:5, name:"Chladič CPU", price:45, qty:2 },
-        ];
-
-        // --- Pomocné funkce ---
-        function $(id){ return document.getElementById(id); }
-        function formatMoney(v){ return "$" + v; }
-
-        // --- Render obchodu a inventáře ---
-        function updateShop(){
-            const shopList = $('shop-list');
-            shopList.innerHTML = '';
-            items.forEach(it=>{
-                const el = document.createElement('div');
-                el.className = 'shop-item';
-                el.innerHTML = `<strong>${it.name}</strong><div class="small">Cena: ${formatMoney(it.price)}</div><div style="margin-top:6px"><button onclick="buyItem(${it.id})">Koupit</button></div>`;
-                shopList.appendChild(el);
-            });
-        }
-
-        function updateInventory(){
-            const inv = $('inventory-list');
-            inv.innerHTML = '';
-            inventory.forEach((it, idx)=>{
-                const li = document.createElement('li');
-                li.innerHTML = `<span>${it.name} x${it.qty} <span class="small"> (cena: ${formatMoney(it.price)})</span></span>
-                                <span>
-                                  <button onclick="useItem(${idx})">Použít</button>
-                                  <button onclick="sellSingle(${idx})">Prodat</button>
-                                </span>`;
-                inv.appendChild(li);
-            });
-            $('money-display').innerText = formatMoney(money);
-        }
-
-        // --- Nákup / prodej ---
-        function buyItem(id){
-            const it = items.find(x=>x.id===id);
-            if(!it) return;
-            if(money < it.price){ logConsole("Nemáte dost peněz."); return; }
-            money -= it.price;
-            const invItem = inventory.find(x=>x.id===it.id);
-            if(invItem) invItem.qty++;
-            else inventory.push({ id:it.id, name:it.name, price:it.price, qty:1 });
-            logConsole(`Koupeno: ${it.name} za ${formatMoney(it.price)}`);
-            updateInventory();
-        }
-
-        // Prodej jedné položky za 50% nákupní ceny (upraveno)
-        function sellSingle(idx){
-            const it = inventory[idx];
-            if(!it) return;
-            const sellPrice = Math.floor(it.price / 2);
-            money += sellPrice;
-            it.qty--;
-            if(it.qty<=0) inventory.splice(idx,1);
-            logConsole(`Prodáno: ${it.name} za ${formatMoney(sellPrice)}`);
-            updateInventory();
-        }
-
-        // Prodat více vybraných položek (pokud budeš používat checkboxy, tady lze rozšířit)
-        function sellAll(){
-            let gained = 0;
-            for(let i=inventory.length-1;i>=0;i--){
-                const it = inventory[i];
-                const sellPrice = Math.floor(it.price / 2);
-                gained += sellPrice * it.qty;
-                inventory.splice(i,1);
+        const language = {
+            cs: {
+                title: 'OPRAVÁŘ PC 1.0',
+                subtitle: 'Vítej v Opraváři PC! Tvým cílem je opravovat rozbité počítače a vydělávat peníze.',
+                newGame: 'Nová hra',
+                loadGame: 'Načíst hru',
+                selectDifficulty: 'Vybrat obtížnost',
+                easy: 'Snadná',
+                medium: 'Střední',
+                hard: 'Těžká',
+                back: 'Zpět',
+                tasks: 'Úkoly',
+                inventory: 'Inventář',
+                shop: 'Obchod',
+                currentMoney: 'Aktuální peníze:',
+                repairedCount: 'Počet opravených počítačů:',
+                buy: 'Koupit',
+                sell: 'Prodat',
+                itemBuy: 'Položky k zakoupení:',
+                itemSell: 'Položky k prodeji:',
+                tasksTitle: 'Seznam úkolů',
+                commands: 'Příkazy:',
+                commandDescription: 'Popis',
+                itemDescription: 'Popis',
+                itemPrice: 'Cena',
+                itemAction: 'Akce',
+                buyMessage: 'Koupil jsi',
+                sellMessage: 'Prodal jsi',
+                insufficientFunds: 'Nemáš dostatek peněz.',
+                notInInventory: 'Nemáš tuto položku v inventáři.',
+                inventoryTitle: 'Inventář',
+                shopTitle: 'Obchod',
+                taskComplete: 'Úkol splněn!',
+                taskReceived: 'Dostal jsi nový úkol:',
+                repairProgress: 'PROBÍHÁ OPRAVA',
+                gameSaved: 'Hra uložena!',
+                gameLoaded: 'Hra byla načtena.',
+                gameSavedBeforeExit: 'Hra byla uložena před opuštěním.',
+                noSavedGame: 'Neexistuje žádná uložená hra.',
+                unknownCommand: 'Neznámý příkaz. Zkus "HELP".',
+                helpText: 'Dostupné příkazy: "TASKS", "INVENTORY", "SHOP", "EXIT", "HELP"',
+                newComputerMessage: 'Přišel nový počítač, vyžaduje opravu.',
+                taskCompleteMessage: 'Úspěšně jsi opravil PC.',
+                notEnoughTime: 'Provedení tohoto příkazu trvá déle. Zkus to znova.',
+                noTask: 'Nemáš žádný aktivní úkol.',
+                invalidTask: 'Tento úkol nemůže být splněn.',
+                taskHelp: 'Klíčová slova: TASKS (zobrazí úkoly), INVENTORY (zobrazí inventář), SHOP (zobrazí obchod).',
+                exitConfirmation: 'Jsi si jistý, že chceš opustit hru? Tvůj postup bude uložen. (Ano/Ne)',
+                exitYes: 'Hru opouštíš.',
+                exitNo: 'Návrat do hry.',
+                gameOver: 'KONEC HRY',
+                gameOverMessage: 'Tvůj bankrot je nevyhnutelný. Sbohem.',
+                fatalError: 'FATAL ERROR',
+                fatalErrorText: 'Windows se setkal s kritickým problémem a musí se vypnout.',
+                fatalErrorText2: 'Prosím, restartujte svůj počítač.',
+                fatalErrorText3: 'Chybový kód: 0x000000A5',
+                loading: 'Načítání...',
+                systemCheck: 'Kontrola systému...',
+                connecting: 'Připojování k serveru...',
+                initializing: 'Inicializace databáze...',
+                tasksData: {
+                    repair_basic: {
+                        description: 'Oprav základní PC. Je potřeba vyměnit RAM paměť.',
+                        reward: 50,
+                        required: ['RAM'],
+                        time: 5,
+                    },
+                    virus_scan: {
+                        description: 'PC je infikované viry. Proveď sken a odstraň je.',
+                        reward: 100,
+                        required: ['ANTIVIRUS'],
+                        time: 8,
+                    },
+                    replace_ssd: {
+                        description: 'Počítač je pomalý. Nainstaluj nový SSD disk.',
+                        reward: 150,
+                        required: ['SSD'],
+                        time: 12,
+                    },
+                    replace_gpu: {
+                        description: 'Grafická karta je nefunkční. Vyměň ji.',
+                        reward: 250,
+                        required: ['GPU'],
+                        time: 15,
+                    },
+                    replace_hdd: {
+                        description: 'Pevný disk selhal. Nainstaluj nový HDD disk.',
+                        reward: 120,
+                        required: ['HDD'],
+                        time: 10,
+                    },
+                    full_pc_repair: {
+                        description: 'PC je totálně rozbité. Vyměň základní desku, procesorový chladič a nainstaluj nový operační systém.',
+                        reward: 500,
+                        required: ['MB', 'COOLER', 'OS'],
+                        time: 20,
+                    },
+                    replace_mb: {
+                        description: 'Základní deska nefunguje. Vyměň ji.',
+                        reward: 200,
+                        required: ['MB'],
+                        time: 18,
+                    },
+                    fix_cooler: {
+                        description: 'Přehřívání. Vyčisti chladič a vyměň teplovodivou pastu.',
+                        reward: 80,
+                        required: ['PASTA'],
+                        time: 7,
+                    },
+                    install_os: {
+                        description: 'Nainstaluj nový operační systém.',
+                        reward: 90,
+                        required: ['OS'],
+                        time: 9,
+                    },
+                },
+                items: {
+                    RAM: { name: 'RAM paměť', price: 20, sellPrice: 15 },
+                    ANTIVIRUS: { name: 'Antivirus', price: 50, sellPrice: 35 },
+                    SSD: { name: 'SSD disk', price: 70, sellPrice: 50 },
+                    GPU: { name: 'Grafická karta', price: 150, sellPrice: 100 },
+                    HDD: { name: 'HDD disk', price: 60, sellPrice: 40 },
+                    MB: { name: 'Základní deska', price: 120, sellPrice: 80 },
+                    COOLER: { name: 'Procesorový chladič', price: 30, sellPrice: 20 },
+                    PASTA: { name: 'Teplovodivá pasta', price: 15, sellPrice: 10 },
+                    OS: { name: 'Operační systém', price: 40, sellPrice: 25 },
+                },
             }
-            money += gained;
-            logConsole(`Prodáno vše za ${formatMoney(gained)}`);
-            updateInventory();
-        }
+        };
 
-        function useItem(idx){
-            const it = inventory[idx];
-            if(!it) return;
-            logConsole(`Používáte: ${it.name}`);
-            // jednoduchá simulace použití
-            it.qty--;
-            if(it.qty<=0) inventory.splice(idx,1);
-            updateInventory();
-        }
+        let lang = 'cs';
+        let difficulty = 'medium';
+        let money = 0;
+        let repairedCount = 0;
+        let inventory = {};
+        let tasks = [];
+        let activeTask = null;
+        let isRepairing = false;
+        let isExiting = false;
+        let lastCommandTime = 0;
+        const difficultyMultipliers = {
+            easy: 1.2,
+            medium: 1,
+            hard: 0.8
+        };
 
-        // --- Konzole a log ---
-        function logConsole(txt){
-            const c = $('console');
-            const p = document.createElement('div');
-            p.textContent = `[${(new Date()).toLocaleTimeString()}] ${txt}`;
-            c.appendChild(p);
-            c.scrollTop = c.scrollHeight;
-        }
+        const languageData = language[lang];
 
-        // --- Události tlačítek ---
-        $('btn-workspace').addEventListener('click', ()=> showMenu('workspace'));
-        $('btn-shop').addEventListener('click', ()=> showMenu('shop'));
-        $('btn-inventory').addEventListener('click', ()=> showMenu('inventory'));
-        $('btn-tasks').addEventListener('click', ()=> showMenu('tasks'));
-        $('start-game').addEventListener('click', ()=> showMenu('workspace'));
-        $('exitShop') && $('exitShop').addEventListener('click', ()=> showMenu('workspace'));
-        $('exitInventory') && $('exitInventory').addEventListener('click', ()=> showMenu('workspace'));
-        $('exitTasks') && $('exitTasks').addEventListener('click', ()=> showMenu('workspace'));
-        $('sell-selected') && $('sell-selected').addEventListener('click', sellAll);
-        $('save-game') && $('save-game').addEventListener('click', ()=>{
-            localStorage.setItem('money', money);
-            localStorage.setItem('inventory', JSON.stringify(inventory));
-            logConsole("Hra uložena.");
-        });
-        $('load-game') && $('load-game').addEventListener('click', ()=>{
-            const m = localStorage.getItem('money');
-            const inv = localStorage.getItem('inventory');
-            if(m) money = parseInt(m);
-            if(inv) inventory = JSON.parse(inv);
-            updateInventory();
-            logConsole("Hra načtena.");
-        });
-
-        // --- Zobrazení menu ---
-        function showMenu(name){
-            document.querySelectorAll('#main-menu, #workspace, #shop, #inventory, #restart-screen').forEach(el=>{
-                el.style.display = 'none';
-            });
-            if(name === 'main') document.getElementById('main-menu').style.display = 'flex';
-            else if(name === 'workspace') {
-                document.getElementById('workspace').style.display = 'grid';
-                updateInventory();
-            }
-            else if(name === 'shop') {
-                document.getElementById('workspace').style.display = 'grid';
-                document.getElementById('shop').style.display = 'block';
-                updateShop();
-            }
-            else if(name === 'inventory') {
-                document.getElementById('workspace').style.display = 'grid';
-                document.getElementById('inventory').style.display = 'block';
-                updateInventory();
-            }
-            else if(name === 'tasks') {
-                document.getElementById('workspace').style.display = 'grid';
-            }
-        }
-
-        // --- Inicializace na startu ---
-        updateShop();
-        updateInventory();
-        showMenu('main');
-
-        // --- Ovládání konzole z klávesnice ---
-        document.getElementById('console-input').addEventListener('keydown', (e)=>{
-            if(e.key === 'Enter'){
-                const v = e.target.value.trim();
-                if(!v) return;
-                logConsole(`> ${v}`);
-                e.target.value = '';
-                // pár základních příkazů:
-                if(v.startsWith('money')){ logConsole('Peněženka: ' + formatMoney(money)); }
-                if(v === 'sell all'){ sellAll(); }
-                if(v.startsWith('buy ')){
-                    const name = v.substring(4).trim();
-                    const it = items.find(x=>x.name.toLowerCase().includes(name.toLowerCase()));
-                    if(it) buyItem(it.id);
-                }
-            }
-        });
-
-        // --- Ostatní drobnosti (restart, diagnostika...) ---
-        $('run-diagnostics').addEventListener('click', ()=>{
-            logConsole("Spouštím diagnostiku...");
-            setTimeout(()=> logConsole("Diagnostika dokončena. Chyby nalezeny: 1"), 1500);
-        });
-        $('repair').addEventListener('click', ()=>{
-            logConsole("Probíhá oprava...");
-            setTimeout(()=> logConsole("Oprava dokončena."), 1200);
-        });
-
-        // detach - ochrana proti chybám
-        window.addEventListener('error', (e)=> {
-            logConsole("Chyba: " + e.message);
-        });
-    </script>
-</body>
-</html>
+        function translateUI() {
+            document.title = languageData.title;
+            document.querySelector('#main-menu .title').textContent = languageData.title;
+            document.querySelector('#main-menu .subtitle').textContent = languageData.subtitle;
+            document.querySelector('#main-menu .menu-item:nth-child(1)').textContent = languageData.newGame;
+            document.querySelector('#main-menu .menu-item:nth-child(2)').textContent = languageData.loadGame;
+            document.querySelector('#main-menu .menu-item:nth-child(3)').textContent = languageData.selectDifficulty;
+            document.querySelector('#difficulty-menu h2').textContent = languageData.selectDifficulty;
+            document.querySelector('#difficulty-menu .menu-item:nth-child(1)').textContent = languageData.easy;
+            document.querySelector('#difficulty-menu .menu-item:nth-child(2)').textContent = languageData.medium;
+            document.querySelector('#difficulty-menu .menu-item:nth-child(3)').textContent = languageData.hard;
+            document.querySelector('#tasks-modal h2').textContent = languageData.tasksTitle;
+            document.querySelector('#inventory-modal h2').textContent = languageData.inventoryTitle;
+            document.querySelector('#shop-modal h2').textContent = languageData.shopTitle;
+            document.querySelector('#current-money').textContent = languageData.currentMoney + ' $' + money;
+            document.querySelector('#repaired-count').textContent = languageData.repairedCount + 
