@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OPRAVÁŘ PC 1.0</title>
+    <style>
+        /* --- Základní stylování --- */
+        :root{
+            --bg:#1a1a1a;
+            --accent:#00b4d8;
+            --panel:#2b2b2b;
+            --text:#eaeaea;
+            --glass: rgba(255,255,255,0.04);
+        }
+        html,body{
+            height:100%;
+            margin:0;
+            background: linear-gradient(180deg,#0b0b0b 0%, #111 100%);
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            color:var(--text);
+        }
+        .container{
+            max-width:1100px;
+            margin:20px auto;
+            padding:20px;
+        }
+        header{
+            display:flex;
+            gap:12px;
+            align-items:center;
+        }
+        h1{font-size:20px;margin:0}
+        nav{margin-left:auto}
+        button{background:var(--accent);border:0;padding:8px 12px;border-radius:8px;color:#000;cursor:pointer}
+        /* --- Menu a okna --- */
+        .menu{display:flex;gap:8px;margin-top:16px}
+        .window{
+            background:var(--panel);
+            border-radius:12px;
+            padding:12px;
+            box-shadow:0 6px 30px rgba(0,0,0,0.6);
+        }
+        #workspace{
+            margin-top:18px;
+            display:grid;
+            grid-template-columns: 1fr 320px;
+            gap:12px;
+        }
+        .card{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent)}
+        /* Inventář */
+        #inventory{min-height:120px}
+        #inventory-list{list-style:none;padding:0;margin:8px 0}
+        #inventory-list li{display:flex;justify-content:space-between;padding:6px;border-bottom:1px solid rgba(255,255,255,0.03)}
+        .small{font-size:13px;color:rgba(255,255,255,0.7)}
+        /* shop */
+        #shop-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+        .shop-item{padding:8px;border-radius:8px;background:rgba(255,255,255,0.02)}
+        /* konzole */
+        #console{height:220px;overflow:auto;background:#090909;padding:8px;border-radius:8px;font-family:monospace;font-size:13px}
+        /* responzivita */
+        @media (max-width:900px){
+            #workspace{grid-template-columns:1fr}
+            nav{display:none}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <img src="logo.png" alt="logo" style="height:48px">
+            <h1>OPRAVÁŘ PC 1.0</h1>
+            <nav>
+                <button id="btn-workspace">Pracoviště</button>
+                <button id="btn-shop">Obchod</button>
+                <button id="btn-inventory">Inventář</button>
+                <button id="btn-tasks">Úkoly</button>
+            </nav>
+        </header>
+
+        <div id="main-menu" class="menu">
+            <div class="window card" style="flex:1">
+                <h2>Herní nastavení</h2>
+                <p class="small">Vyber obtížnost, zapni/ vypni hudbu nebo si prohlédni návod.</p>
+                <div style="margin-top:8px">
+                    <label class="small">Hudba <input type="checkbox" id="toggle-music" checked></label>
+                    <label class="small" style="margin-left:12px">Zvuky <input type="checkbox" id="toggle-sfx" checked></label>
+                </div>
+                <div style="margin-top:12px">
+                    <button id="start-game">Spustit hru</button>
+                </div>
+            </div>
+
+            <div class="window card" style="width:320px">
+                <h3>Aktuální stav</h3>
+                <p class="small">Úkol: <span id="current-task">žádný</span></p>
+                <p class="small">Peněženka: <strong id="money-display">$100</strong></p>
+                <div style="margin-top:6px">
+                    <button id="save-game">Uložit hru</button>
+                    <button id="load-game">Načíst hru</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="workspace" style="display:none">
+            <div style="min-height:600px">
+                <div class="window card">
+                    <h2>Pracovní plocha</h2>
+                    <p class="small">Zde se provádí opravy — vlož komponenty, spusť diagnostiku a oprav chyby.</p>
+
+                    <div style="display:flex;gap:10px;margin-top:12px">
+                        <div style="flex:1">
+                            <h3>PC</h3>
+                            <div style="height:220px;border-radius:8px;background:linear-gradient(180deg, #050505, #111);display:flex;align-items:center;justify-content:center">
+                                <div style="text-align:center">
+                                    <img src="pc.png" alt="pc" style="height:120px;opacity:0.9"><br>
+                                    <span class="small">Klikni na PC pro spuštění diagnostiky</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="width:320px">
+                            <div id="inventory" class="window card">
+                                <h2>Inventář</h2>
+                                <p>Zde se nachází vaše součástky, které můžete prodat za 50% prodejní ceny. Vaše peněženka: ${money}$</p>
+                                <ul id="inventory-list"></ul>
+                                <div style="margin-top:8px">
+                                    <button id="sell-selected">Prodat vybrané</button>
+                                    <button id="exitInventory">Zavřít</button>
+                                </div>
+                            </div>
+
+                            <div id="shop" class="window card" style="margin-top:12px;display:none">
+                                <h3>Obchod</h3>
+                                <div id="shop-list">
+                                    <!-- položky obchodu budou dynamicky vloženy -->
+                                </div>
+                                <div style="margin-top:8px">
+                                    <button id="exitShop">Zavřít obchod</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:12px">
+                        <h3>Konzole</h3>
+                        <div id="console"></div>
+                        <input id="console-input" placeholder="zadejte příkaz..." style="width:100%;margin-top:8px;padding:8px;border-radius:6px;border:1px solid rgba(255,255,255,0.06)">
+                    </div>
+                </div>
+
+                <div class="window card" style="margin-top:12px">
+                    <h3>Diagnostika</h3>
+                    <p class="small">Automatické testy, logy a nástroje.</p>
+                    <div style="display:flex;gap:8px;margin-top:8px">
+                        <button id="run-diagnostics">Spustit test</button>
+                        <button id="repair">Opravit</button>
+                    </div>
+                </div>
+            </div>
+
+            <aside>
+                <div class="window card" style="width:320px">
+                    <h3>Rychlý přehled</h3>
+                    <p class="small">Stav: <span id="status">OK</span></p>
+                    <p class="small">Úroveň: <span id="level">1</span></p>
+                    <div style="margin-top:8px">
+                        <h4>Úkoly</h4>
+                        <ul id="tasks-list" style="padding-left:16px"></ul>
+                        <div style="margin-top:8px">
+                            <button id="exitTasks">Zavřít</button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- skryté obrazovky: restart, shutdown -->
+        <div id="restart-screen" style="display:none" class="window card">
+            <h3>Restartování systému</h3>
+            <p class="small">Restartuji...</p>
+            <button id="restartButton">OK</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Data a inicializace ---
+        let money = 100;
+        const items = [
+            { id:1, name:"Napájecí zdroj", price:120 },
+            { id:2, name:"RAM 8GB", price:80 },
+            { id:3, name:"SSD 256GB", price:150 },
+            { id:4, name:"Grafická karta (starší)", price:260 },
+            { id:5, name:"Chladič CPU", price:45 },
+        ];
+        let inventory = [
+            { id:2, name:"RAM 8GB", price:80, qty:1 },
+            { id:5, name:"Chladič CPU", price:45, qty:2 },
+        ];
+
+        // --- Pomocné funkce ---
+        function $(id){ return document.getElementById(id); }
+        function formatMoney(v){ return "$" + v; }
+
+        // --- Render obchodu a inventáře ---
+        function updateShop(){
+            const shopList = $('shop-list');
+            shopList.innerHTML = '';
+            items.forEach(it=>{
+                const el = document.createElement('div');
+                el.className = 'shop-item';
+                el.innerHTML = `<strong>${it.name}</strong><div class="small">Cena: ${formatMoney(it.price)}</div><div style="margin-top:6px"><button onclick="buyItem(${it.id})">Koupit</button></div>`;
+                shopList.appendChild(el);
+            });
+        }
+
+        function updateInventory(){
+            const inv = $('inventory-list');
+            inv.innerHTML = '';
+            inventory.forEach((it, idx)=>{
+                const li = document.createElement('li');
+                li.innerHTML = `<span>${it.name} x${it.qty} <span class="small"> (cena: ${formatMoney(it.price)})</span></span>
+                                <span>
+                                  <button onclick="useItem(${idx})">Použít</button>
+                                  <button onclick="sellSingle(${idx})">Prodat</button>
+                                </span>`;
+                inv.appendChild(li);
+            });
+            $('money-display').innerText = formatMoney(money);
+        }
+
+        // --- Nákup / prodej ---
+        function buyItem(id){
+            const it = items.find(x=>x.id===id);
+            if(!it) return;
+            if(money < it.price){ logConsole("Nemáte dost peněz."); return; }
+            money -= it.price;
+            const invItem = inventory.find(x=>x.id===it.id);
+            if(invItem) invItem.qty++;
+            else inventory.push({ id:it.id, name:it.name, price:it.price, qty:1 });
+            logConsole(`Koupeno: ${it.name} za ${formatMoney(it.price)}`);
+            updateInventory();
+        }
+
+        // Prodej jedné položky za 50% nákupní ceny (upraveno)
+        function sellSingle(idx){
+            const it = inventory[idx];
+            if(!it) return;
+            const sellPrice = Math.floor(it.price / 2);
+            money += sellPrice;
+            it.qty--;
+            if(it.qty<=0) inventory.splice(idx,1);
+            logConsole(`Prodáno: ${it.name} za ${formatMoney(sellPrice)}`);
+            updateInventory();
+        }
+
+        // Prodat více vybraných položek (pokud budeš používat checkboxy, tady lze rozšířit)
+        function sellAll(){
+            let gained = 0;
+            for(let i=inventory.length-1;i>=0;i--){
+                const it = inventory[i];
+                const sellPrice = Math.floor(it.price / 2);
+                gained += sellPrice * it.qty;
+                inventory.splice(i,1);
+            }
+            money += gained;
+            logConsole(`Prodáno vše za ${formatMoney(gained)}`);
+            updateInventory();
+        }
+
+        function useItem(idx){
+            const it = inventory[idx];
+            if(!it) return;
+            logConsole(`Používáte: ${it.name}`);
+            // jednoduchá simulace použití
+            it.qty--;
+            if(it.qty<=0) inventory.splice(idx,1);
+            updateInventory();
+        }
+
+        // --- Konzole a log ---
+        function logConsole(txt){
+            const c = $('console');
+            const p = document.createElement('div');
+            p.textContent = `[${(new Date()).toLocaleTimeString()}] ${txt}`;
+            c.appendChild(p);
+            c.scrollTop = c.scrollHeight;
+        }
+
+        // --- Události tlačítek ---
+        $('btn-workspace').addEventListener('click', ()=> showMenu('workspace'));
+        $('btn-shop').addEventListener('click', ()=> showMenu('shop'));
+        $('btn-inventory').addEventListener('click', ()=> showMenu('inventory'));
+        $('btn-tasks').addEventListener('click', ()=> showMenu('tasks'));
+        $('start-game').addEventListener('click', ()=> showMenu('workspace'));
+        $('exitShop') && $('exitShop').addEventListener('click', ()=> showMenu('workspace'));
+        $('exitInventory') && $('exitInventory').addEventListener('click', ()=> showMenu('workspace'));
+        $('exitTasks') && $('exitTasks').addEventListener('click', ()=> showMenu('workspace'));
+        $('sell-selected') && $('sell-selected').addEventListener('click', sellAll);
+        $('save-game') && $('save-game').addEventListener('click', ()=>{
+            localStorage.setItem('money', money);
+            localStorage.setItem('inventory', JSON.stringify(inventory));
+            logConsole("Hra uložena.");
+        });
+        $('load-game') && $('load-game').addEventListener('click', ()=>{
+            const m = localStorage.getItem('money');
+            const inv = localStorage.getItem('inventory');
+            if(m) money = parseInt(m);
+            if(inv) inventory = JSON.parse(inv);
+            updateInventory();
+            logConsole("Hra načtena.");
+        });
+
+        // --- Zobrazení menu ---
+        function showMenu(name){
+            document.querySelectorAll('#main-menu, #workspace, #shop, #inventory, #restart-screen').forEach(el=>{
+                el.style.display = 'none';
+            });
+            if(name === 'main') document.getElementById('main-menu').style.display = 'flex';
+            else if(name === 'workspace') {
+                document.getElementById('workspace').style.display = 'grid';
+                updateInventory();
+            }
+            else if(name === 'shop') {
+                document.getElementById('workspace').style.display = 'grid';
+                document.getElementById('shop').style.display = 'block';
+                updateShop();
+            }
+            else if(name === 'inventory') {
+                document.getElementById('workspace').style.display = 'grid';
+                document.getElementById('inventory').style.display = 'block';
+                updateInventory();
+            }
+            else if(name === 'tasks') {
+                document.getElementById('workspace').style.display = 'grid';
+            }
+        }
+
+        // --- Inicializace na startu ---
+        updateShop();
+        updateInventory();
+        showMenu('main');
+
+        // --- Ovládání konzole z klávesnice ---
+        document.getElementById('console-input').addEventListener('keydown', (e)=>{
+            if(e.key === 'Enter'){
+                const v = e.target.value.trim();
+                if(!v) return;
+                logConsole(`> ${v}`);
+                e.target.value = '';
+                // pár základních příkazů:
+                if(v.startsWith('money')){ logConsole('Peněženka: ' + formatMoney(money)); }
+                if(v === 'sell all'){ sellAll(); }
+                if(v.startsWith('buy ')){
+                    const name = v.substring(4).trim();
+                    const it = items.find(x=>x.name.toLowerCase().includes(name.toLowerCase()));
+                    if(it) buyItem(it.id);
+                }
+            }
+        });
+
+        // --- Ostatní drobnosti (restart, diagnostika...) ---
+        $('run-diagnostics').addEventListener('click', ()=>{
+            logConsole("Spouštím diagnostiku...");
+            setTimeout(()=> logConsole("Diagnostika dokončena. Chyby nalezeny: 1"), 1500);
+        });
+        $('repair').addEventListener('click', ()=>{
+            logConsole("Probíhá oprava...");
+            setTimeout(()=> logConsole("Oprava dokončena."), 1200);
+        });
+
+        // detach - ochrana proti chybám
+        window.addEventListener('error', (e)=> {
+            logConsole("Chyba: " + e.message);
+        });
+    </script>
+</body>
+</html>
